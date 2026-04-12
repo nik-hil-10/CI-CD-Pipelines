@@ -26,11 +26,14 @@ pipeline {
         }
         stage('Deploy') {
             steps {
-                echo 'Deploying application to Staging Environment...'
-                // Simulated deployment command
-                sh '''
-                echo "Deployment triggered successfully for staging!"
-                '''
+                echo 'Deploying application to AWS Staging Environment...'
+                // Using credentials binding to fetch the key securely
+                withCredentials([sshUserPrivateKey(credentialsId: 'aws-staging-key', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
+                    sh '''
+                    ssh -o StrictHostKeyChecking=no -i $SSH_KEY $SSH_USER@13.204.75.214 "mkdir -p ~/flask-staging"
+                    scp -o StrictHostKeyChecking=no -i $SSH_KEY app.py requirements.txt $SSH_USER@13.204.75.214:~/flask-staging/
+                    '''
+                }
             }
         }
     }
@@ -40,10 +43,16 @@ pipeline {
             echo "Pipeline Execution Completed."
         }
         success {
-            echo "Build Succeeded! (Simulated Email Notification)"
+            echo "Build Succeeded!"
+            mail to: 'admin@example.com',
+                 subject: "SUCCESS: Jenkins Build Pipeline",
+                 body: "The Jenkins CI/CD Pipeline completed successfully."
         }
         failure {
-            echo "Build Failed! (Simulated Email Notification)"
+            echo "Build Failed!"
+            mail to: 'admin@example.com',
+                 subject: "FAILED: Jenkins Build Pipeline",
+                 body: "The Jenkins CI/CD Pipeline encountered an error."
         }
     }
 }

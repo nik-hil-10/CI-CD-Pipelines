@@ -47,25 +47,35 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Simulate Staging Deployment
-        run: |
-          echo "Deploying branch 'staging' to the STAGING environment..."
-          echo "Using token ending with: ...${DEPLOYMENT_TOKEN: -4}"
-        env:
-          DEPLOYMENT_TOKEN: ${{ secrets.DEPLOYMENT_TOKEN }}
+      - name: Deploy to AWS Staging
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USER }}
+          key: ${{ secrets.STAGING_KEY }}
+          script: |
+            echo "Deploying branch 'staging' to the AWS Staging environment..."
+            mkdir -p ~/flask-staging
+            cd ~/flask-staging
+            # We would pull the latest code or run Docker here in a full app
 
   deploy_production:
     name: Deploy to Production
     needs: build_and_test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: startsWith(github.ref, 'refs/tags/')
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Simulate Production Deployment
-        run: |
-          echo "Deploying branch 'main' to the PRODUCTION environment..."
-          echo "Using token ending with: ...${DEPLOYMENT_TOKEN: -4}"
-        env:
-          DEPLOYMENT_TOKEN: ${{ secrets.DEPLOYMENT_TOKEN }}
+      - name: Deploy to AWS Production
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.PROD_KEY }}
+          script: |
+            echo "Deploying Release Tag to the AWS PRODUCTION environment..."
+            mkdir -p ~/flask-prod
+            cd ~/flask-prod
+            # We would deploy the production-ready code here
