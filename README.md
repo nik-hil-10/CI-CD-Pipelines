@@ -32,7 +32,7 @@ Our `Jenkinsfile` contains the following stages:
 - **Deploy**: If tests pass without error, triggers a deployment to the staging environment (simulated).
 
 ### Pipeline Execution Screenshots
-*(Insert Screenshots here showing Build, Test, and Deployment stages in Jenkins UI)*
+![Jenkins Pipeline Stages](screenshots/jenkins-pipeline.png)
 
 ---
 
@@ -60,4 +60,4 @@ The implemented GitHub actions workflow (`.github/workflows/main.yml`) includes:
 - **Deploy to Production**: Deploys to a production environment when changes happen on main branch.
 
 ### GitHub Actions Execution Screenshots
-*(Insert Screenshots here showing the successful execution of your GitHub Actions workflows)*
+![GitHub Actions Execution](screenshots/github-actions.png)
