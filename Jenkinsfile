@@ -44,13 +44,13 @@ pipeline {
         }
         success {
             echo "Build Succeeded!"
-            mail to: 'admin@example.com',
+            mail to: 'nikhil.mishra0310@gmail.com',
                  subject: "SUCCESS: Jenkins Build Pipeline",
                  body: "The Jenkins CI/CD Pipeline completed successfully."
         }
         failure {
             echo "Build Failed!"
-            mail to: 'admin@example.com',
+            mail to: 'nikhil.mishra0310@gmail.com',
                  subject: "FAILED: Jenkins Build Pipeline",
                  body: "The Jenkins CI/CD Pipeline encountered an error."
         }

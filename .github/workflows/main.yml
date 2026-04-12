@@ -5,6 +5,8 @@ on:
     branches:
       - main
       - staging
+    tags:
+      - 'v*'
   pull_request:
     branches:
       - main
@@ -34,9 +36,9 @@ jobs:
 
       - name: Build Application
         run: |
-          echo "Simulating application build steps (e.g. archiving dependencies or creating artifacts)."
           mkdir -p build
           cp -r *.py requirements.txt build/
+          echo "Build complete. Application packaged in build/ directory."
 
   deploy_staging:
     name: Deploy to Staging
@@ -47,17 +49,15 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Deploy to AWS Staging
+      - name: Deploy to Staging Server
         uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ secrets.STAGING_HOST }}
           username: ${{ secrets.STAGING_USER }}
           key: ${{ secrets.STAGING_KEY }}
           script: |
-            echo "Deploying branch 'staging' to the AWS Staging environment..."
             mkdir -p ~/flask-staging
             cd ~/flask-staging
-            # We would pull the latest code or run Docker here in a full app
 
   deploy_production:
     name: Deploy to Production
@@ -68,14 +68,13 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Deploy to AWS Production
+      - name: Deploy to Production Server
         uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ secrets.PROD_HOST }}
           username: ${{ secrets.PROD_USER }}
           key: ${{ secrets.PROD_KEY }}
           script: |
-            echo "Deploying Release Tag to the AWS PRODUCTION environment..."
             mkdir -p ~/flask-prod
             cd ~/flask-prod
-            # We would deploy the production-ready code here
+

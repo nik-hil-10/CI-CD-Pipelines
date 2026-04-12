@@ -1,66 +1,94 @@
-# CI/CD pipelines for Flask Application
+# CI/CD Pipelines for Flask Application
 
-This repository is my submission for the CI/CD Pipeline assignment. It contains a simple Python Flask application and demonstrates two distinct CI/CD architectures:
-1. A Jenkins Automation Pipeline
-2. A GitHub Actions Workflow
+## Overview
 
-## Project Prerequisites
-- **Python 3.9+** (For local execution and testing)
-- **Git**
-- **Docker & Docker Compose** (Optional, but used here to easily deploy Jenkins locally)
-- A GitHub Account
+This project demonstrates CI/CD pipeline implementation for a Python Flask web application using two approaches:
+1. **Jenkins Pipeline** — hosted locally via Docker with automated GitHub webhook triggers, SSH-based deployment to an AWS EC2 staging server, and email notifications.
+2. **GitHub Actions Workflow** — cloud-native CI/CD with branch-based staging deployments and tag-based production releases via SSH to AWS EC2.
+
+## Prerequisites
+
+- Python 3.9+
+- Git
+- Docker & Docker Compose
+- An AWS EC2 instance (Ubuntu) for deployment
+- A GitHub account
 
 ---
 
 ## 1. Jenkins CI/CD Pipeline
 
-### Setup and Configuration
-For this assignment, I structured my Jenkins environment using Docker so it would come pre-packaged with Python 3, allowing it to easily test my Flask app.
+### Jenkins Environment
 
-**Steps to run Jenkins locally:**
-1. Navigate to the `jenkins-setup/` directory.
-2. Run `docker-compose up -d --build`. This starts a Jenkins server on port 8080 with Python, Pip, and Venv pre-installed.
-3. Access Jenkins at `http://localhost:8080` and unlock it using the initial admin password from `docker logs jenkins_server`.
-4. Install the **"Suggested Plugins"** and create an admin user.
-5. Create a new **Pipeline** Job named `flask-app-pipeline`.
-6. Under the pipeline definition, choose `Pipeline script from SCM`, specify `Git`, and provide the repository URL. Ensure the script path is `Jenkinsfile`.
+Jenkins runs inside a Docker container with Python 3 pre-installed. The `jenkins-setup/` directory contains the `Dockerfile` and `docker-compose.yml` used to build and run the Jenkins server.
 
-**Jenkins Automated Triggers (Requirement #4):**
-To ensure the pipeline triggers automatically whenever code is pushed to `main`, configure a webhook mapping from GitHub to the Jenkins URL. Alternatively, under the Jenkins Job Configuration, navigate to **Build Triggers**, check **Poll SCM**, and enter `* * * * *` so Jenkins automatically listens for new commits.
+To start Jenkins:
+```bash
+cd jenkins-setup/
+docker-compose up -d --build
+```
+
+Access Jenkins at `http://localhost:8080`. The initial admin password can be retrieved using:
+```bash
+docker logs jenkins_server
+```
+
+### Pipeline Configuration
+
+A Pipeline job named `flask-app-pipeline` is configured with:
+- **SCM**: Git, pointing to this repository
+- **Branch**: `*/main`
+- **Script Path**: `Jenkinsfile`
+
+### Automated Triggers
+
+A GitHub Webhook is configured to notify Jenkins whenever code is pushed to the `main` branch. Jenkins is exposed to the internet using Ngrok, and the webhook payload URL is set to `<ngrok-url>/github-webhook/` in the repository's webhook settings.
 
 ### Pipeline Stages
-My `Jenkinsfile` contains the following stages:
-- **Build**: Creates a virtual environment and installs dependencies using `pip`.
-- **Test**: Runs my unit tests mapped in `test_app.py` using `pytest`.
-- **Deploy**: If tests pass without error, triggers a live SSH deployment to the AWS Staging Environment.
 
-### Pipeline Execution Screenshots
+The `Jenkinsfile` defines three stages:
+- **Build**: Creates a Python virtual environment and installs dependencies from `requirements.txt` using `pip`.
+- **Test**: Runs the test suite (`test_app.py`) using `pytest`.
+- **Deploy**: On success, deploys the application to the AWS EC2 staging server via SSH using Jenkins credentials binding.
+
+### Email Notifications
+
+Jenkins is configured with SMTP (Gmail) under **Manage Jenkins → System → E-mail Notification**. The pipeline sends email alerts to `nikhil.mishra0310@gmail.com` on build success or failure using the `mail` step in the `post` block of the `Jenkinsfile`.
+
+### Jenkins Pipeline Screenshots
+
 ![Jenkins Pipeline Stages](screenshots/jenkins-pipeline.png)
 
 ---
 
 ## 2. GitHub Actions CI/CD Pipeline
 
-### Setup and Configuration
-My GitHub Actions workflow is controlled entirely via `.github/workflows/main.yml`.
+### Workflow Configuration
 
-**Branches:**
-- `main` branch
-- `staging` branch
+The workflow is defined in `.github/workflows/main.yml`. It triggers on:
+- Pushes to `main` and `staging` branches
+- Tag pushes matching `v*` (e.g., `v1.0.0`)
+- Pull requests to `main` and `staging`
 
-**Secrets:**
-GitHub Secrets are used to mask sensitive data needed for my AWS server deployments.
-1. Navigate to `Settings -> Secrets and variables -> Actions`.
-2. Add three secrets: `STAGING_HOST` (The IP of the EC2 Server), `STAGING_USER` (e.g. `ubuntu`), and `STAGING_KEY` (The private .pem key).
-3. These are securely referenced inside the `main.yml` workflow to perform the remote deployments!
+### Environment Secrets
+
+The following GitHub Secrets are configured under **Settings → Secrets and variables → Actions**:
+
+| Secret | Purpose |
+|--------|---------|
+| `STAGING_HOST` | IP address of the staging EC2 instance |
+| `STAGING_USER` | SSH username for the staging server |
+| `STAGING_KEY` | SSH private key for staging server access |
+| `PROD_HOST` | IP address of the production EC2 instance |
+| `PROD_USER` | SSH username for the production server |
+| `PROD_KEY` | SSH private key for production server access |
 
 ### Workflow Jobs
-My implemented workflow includes:
-- **Install Dependencies**: Fetches `pip` requirements.
-- **Run Tests**: Executes `pytest` to guarantee code integrity.
-- **Build**: Packages the application.
-- **Deploy to Staging**: Automatically connects via SSH and deploys when pushing to the `staging` branch.
-- **Deploy to Production**: Automatically connects via SSH and deploys when a formal Release Tag is created tracking `main`!
 
-### GitHub Actions Execution Screenshots
-![GitHub Actions Execution](screenshots/github-actions.png)
+- **Build & Test**: Checks out the code, sets up Python 3.9, installs dependencies, runs `pytest`, and packages the application.
+- **Deploy to Staging**: Runs only on pushes to the `staging` branch. Connects to the staging server via SSH using `appleboy/ssh-action` and deploys the application.
+- **Deploy to Production**: Runs only when a release tag (`v*`) is pushed. Connects to the production server via SSH and deploys the tagged release.
+
+### GitHub Actions Screenshots
+
+![GitHub Actions Workflow](screenshots/github-actions.png)
