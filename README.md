@@ -58,6 +58,7 @@ Jenkins is configured with SMTP (Gmail) under **Manage Jenkins → System → E-
 ### Jenkins Pipeline Screenshots
 
 ![Jenkins Pipeline Stages](screenshots/jenkins-pipeline.png)
+![Jenkins Automatic GitHub Trigger](screenshots/jenkins-github-trigger.png)
 
 ---
 
@@ -91,4 +92,5 @@ The following GitHub Secrets are configured under **Settings → Secrets and var
 
 ### GitHub Actions Screenshots
 
-![GitHub Actions Workflow](screenshots/github-actions.png)
+![GitHub Actions Workflow Runs](screenshots/github-actions-runs.png)
+![GitHub Actions Job Details](screenshots/github-actions-details.png)
